@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!--
+Example of creating a species distribution grid map in Leaflet from data
+provided by NBN Atlas web services.
+-->
+<html>
+  <head>
+    <title>Red fox</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.4.3/proj4.js"></script>
+    <script src="https://cdn.rawgit.com/kartena/Proj4Leaflet/a7114705/src/proj4leaflet.js"></script>
+    <script src="https://cdn.rawgit.com/rob-murray/os-leaflet/9a7d11ed/OSOpenSpace.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+  </head>
+  <body>
+    <div id="map" style="height:782px;width:600px"></div>
+    <script>
+      // Create a base layer 
+      // This could be an Ordnance Survey layer if you have an OpenSpace account. E.g.
+      // var baseLayer = L.OSOpenSpace.tilelayer('EC9EDE7DAD732ABAE0430C6CA40AB812');
+      // In the short term you can still get a base layer from the old NBN Gateway.
+      var baseLayer = L.tileLayer.wms('https://gis.nbn.org.uk/Context', {
+        layers: 'Vice-counties'
+      });
+      
+      // Make a map in OSGB projection and add the base layer.
+      var map = new L.map('map', {
+        crs: L.OSOpenSpace.CRS,
+        center: [55.6,-4.0],
+        zoom: 0,
+        layers: [baseLayer]
+      });
+      
+      // We can download a GeoJSON definition of GB grid squares at different
+      // resolutions. Thanks Charles.
+      // The 1km file is huge. We'll need to do something more clever to show 
+      // grid maps at this resolution.
+      // var url_100km = "https://cdn.rawgit.com/charlesroper/OSGB_Grids/3b7d1709/GeoJSON/OSGB_Grid_100km.geojson";
+      var url_10km = "https://cdn.rawgit.com/charlesroper/OSGB_Grids/3b7d1709/GeoJSON/OSGB_Grid_10km.geojson";
+      // var url_1km = "https://cdn.rawgit.com/charlesroper/OSGB_Grids/3b7d1709/GeoJSON/OSGB_Grid_1km.geojson";
+      $.getJSON(url_10km, function(grid) {
+        // $, if you are unfamiliar with it, is shorthand for jQuery.
+        // Assuming getJSON was successful, grid now contains a geoJSON
+        // definition with one feature per grid square.
+        
+        // Now obtain the distribution for our chosen species. The response
+        // includes an element for every grid square where the species is 
+        // present. The field used to facet results must match the resolution 
+        // of the grid we just obtained.
+        var url_martes = 'https://records-ws.nbnatlas.org/occurrences/search?q=species:"Martes martes"&facets=grid_ref_10000&fsort=index&flimit=99999&pageSize=0';
+        $.getJSON(url_martes, function(distribution) {
+          // If getJSON was successful, distribution contains the response
+          
+          // Define a style for drawing grid squares.
+          distStyle = {
+            color: "#000",
+            weight: 1,
+            opacity: 0.8,
+            fillColor: "#ffff00",
+            fillOpacity: 0.5 
+          };
+          
+          // Create a geoJSON layer and add it to the map.
+          L.geoJSON(grid, {
+            style: distStyle,
+            onEachFeature: function(feature, layer) {
+              // Add a pop up which appears when you click any grid square.
+              layer.bindPopup(feature.properties.TILE_NAME);
+            },
+            filter: function(feature) {
+              // The filter function is called on every feature (grid square) 
+              // in grid which determines whether it is added to the layer.
+              
+              // The grid ref of the feature we are thinking of adding.
+              var gridrefFeature = feature.properties.TILE_NAME;
+              // The array of grid squares in the distribution.
+              var facets = distribution.facetResults[0].fieldResult;
+              for (var i = 0; i < facets.length; i++) {
+                if (facets[i].label == gridrefFeature) {
+                  // If the feature grid ref matches a facet grid ref then
+                  // return true to display the grid square.
+                  return true;
+                }
+              }
+              // If the grid square is not in the distribution return false and
+              // it will not be shown.
+              return false;
+            }
+          }).addTo(map);                 
+        });
+      });
+    </script>
+  </body>
+</html>

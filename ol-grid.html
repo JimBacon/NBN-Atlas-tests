@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.0.1/css/ol.css" type="text/css">
+    <script src="https://openlayers.org/en/v4.0.1/build/ol.js" type="text/javascript"></script>    
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <script type="text/javascript">
+      var layers = {};
+      layers['nbn'] = new ol.layer.Tile({
+        source: new ol.source.TileWMS({
+          url: 'https://records-ws.nbnatlas.org/ogc/wms/reflect?q=Martes martes',
+          params: {
+            VERSION: '1.1.1',
+            ENV: "colourmode:osgrid;color:ffff00;opacity:0.5;gridlabels:true;gridres:singlegrid"
+          }
+        }),
+      });
+  
+      var map = new ol.Map({
+        target: 'map',
+        layers: [
+          layers['nbn']
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([-4, 56]),
+          zoom: 5
+        })
+      });      
+    </script>
+
+  </body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+<head>
+   <title>Red fox</title>
+   <meta charset="utf-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@0.7.7/dist/leaflet.css" />
+   <script src="https://unpkg.com/leaflet@0.7.7/dist/leaflet.js"></script>
+</head>
+<body>
+<div id="map" style="height:782px;width:600px"></div>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+//make a base layer 
+   var minimal = L.tileLayer(
+      "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
+         styleId: 22677,
+         attribution: "Map data &copy; 2011 OpenStreetMap contributors, Imagery &copy; 2011 CloudMade"
+   });
+//make an occurrence layer for macropus
+   var macropus = L.tileLayer.wms(
+       "https://records-ws.nbnatlas.org/ogc/wms/reflect", {  
+         q : 'species:"Martes martes"',
+         layers: 'ALA:occurrences',
+         format: 'image/png',
+         transparent: true,
+         attribution: "NBN Atlas",
+         bgcolor:"0x000000",
+         ENV: "colourmode:osgrid;color:ffff00;opacity:0.5;gridlabels:true;gridres:singlegrid"
+   });
+//make a map and add the layers
+   var map = L.map('map', {
+      center: [56.6,-4.0],
+      zoom: 6,
+      layers: [minimal, macropus]
+   });
+</script>
+</body>
+</html>
